@@ -1,7 +1,8 @@
 var handler = require("../web/request-handler");
-handler.datadir = __dirname + "testdata/sites.txt";
+handler.datadir = __dirname + "/testdata/sites.txt";
 var stubs = require("./helpers/stubs");
 var res;
+var fs = require('fs');
 
 // allows us to run tests async
 function async(cb){
