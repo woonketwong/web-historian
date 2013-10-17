@@ -5,14 +5,14 @@ var path = require('path');
 
 describe("html fetcher helpers", function(){
 
+  var resultArray;
+
   it("should have a 'readUrls' function", function(){
     var urlArray = ["example1.com", "example2.com"];
 
     var filePath = path.join(__dirname, "../data/sites.txt");
 
     fs.writeFileSync(filePath, urlArray.join("\n"));
-
-    var resultArray;
 
     runs(function(){
       htmlFetcherHelpers.readUrls(filePath, function(urls){
@@ -28,7 +28,7 @@ describe("html fetcher helpers", function(){
   });
 
   it("should have a 'downloadUrls' function", function(){
-    var result = htmlFetcherHelpers.downloadUrls();
+    var result = htmlFetcherHelpers.downloadUrls(['www.yahoo.com']);
     expect(result).toBeTruthy();
   });
 });
