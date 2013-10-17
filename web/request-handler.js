@@ -16,57 +16,78 @@ module.exports.datadir = path.join(__dirname, "../data/sites.txt"); // tests wil
 module.exports.handleRequest = function (req, res) {
   console.log(exports.datadir);
 
-  var headers = {
+  var fileLocation;
+  var pathname = url.parse(req.url).pathname;
+
+  var setResponseBodyFromFile = function(fileLocation){
+    var responseBody;
+    if(fs.existsSync(fileLocation)){
+      responseBody = fs.readFileSync(fileLocation, 'utf8');
+    } else {
+      responseBody = 'Not found';
+    }
+    completeResponse(200, responseBody);
+  };
+
+  var completeResponse = function(statusCode, responseBody){
+    connection.end();
+
+    var headers = {
     "access-control-allow-origin": "*",
     "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
     "access-control-allow-headers": "content-type, accept",
     "access-control-max-age": 10,
     "Content-Type": "text/html"
-  };
-  var statusCode = 404;
-  var responseBody = '';
-  var fileLocation;
-  var pathname = url.parse(req.url).pathname;
+    };
 
-  connection.connect();
+    res.writeHead(statusCode, headers);
+    res.end(responseBody);
+  };
 
   switch(req.method){
     case 'GET':
+      connection.connect();
       if (pathname === '/') {
         fileLocation = path.join(__dirname, '../web/public/index.html');
+        setResponseBodyFromFile(fileLocation);
       } else if (pathname){
-        fileLocation = path.join(__dirname, '../data/sites', pathname);
-      }
-      if(fs.existsSync(fileLocation)){
-        statusCode = 200;
-        responseBody = fs.readFileSync(fileLocation, 'utf8');
+        connection.query('select filepath from siteIndex where url = ' + pathname, function(err, rows){
+          fileLocation = rows[0].filepath;
+          setResponseBodyFromFile(fileLocation);
+        });
       }
       break;
 
     case 'POST':
-      statusCode = 302;
+      connection.connect();
       var data = '';
       req.on('data', function(chunk) {
         data += chunk;
       });
       req.on('end', function() {
-        data = querystring.parse(data)['url'] + '\n';
-        fileLocation = path.join(__dirname, "../data/sites.txt");
-        fs.appendFileSync(fileLocation, data);
-        responseBody = "OK";
+        var urlToAdd = querystring.parse(data)['url'];
+
+        connection.query('select * from siteIndex where url = ' + urlToAdd, function(err, rows){
+          // check whether SQL database already contains row for the URL
+          if(rows.length){
+            fileLocation = path.join(__dirname, '../data/sites/');
+            connection.query('insert into siteIndex (url, filepath) values (' +
+              urlToAdd + ',' + fileLocation + urlToAdd + ')', function(err){
+                completeResponse(302, 'Added to database.');
+            });
+          } else {
+            completeResponse(302, 'Already in database.');
+          }
+        });
       });
       break;
 
     case 'OPTIONS':
-      statusCode = 200;
-      responseBody = '';
+      completeResponse(200, '');
       break;
 
     default:
-      responseBody = 'Not Found';
+      completeResponse(404, 'Not found');
   }
 
-  connection.end();
-  res.writeHead(statusCode, headers);
-  res.end(responseBody);
 };

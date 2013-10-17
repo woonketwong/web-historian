@@ -5,6 +5,6 @@
 CREATE database webHistorian;
 USE webHistorian;
 
-CREATE table site_files
+CREATE table siteIndex
   (url varchar(1000),
   filepath varchar(100));

@@ -9,12 +9,12 @@ exports.readUrls = function(filePath, cb){
   cb(urls);
 };
 
-exports.downloadUrls = function(urls){
+exports.downloadUrls = function(urls, filepath){
   // fixme
   var filePath = '';
   _.each(urls, function(url){
-    filePath = path.join(__dirname, "../../data/sites/", url);
-    http.get(url, filePath, function(error, result){
+    filepath = filepath || path.join(__dirname, "../../data/sites/", url);
+    http.get(url, filepath, function(error, result){
       if (error) {
         console.log('Error downloading URL:', error);
       }
