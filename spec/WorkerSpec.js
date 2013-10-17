@@ -8,7 +8,7 @@ describe("html fetcher helpers", function(){
   it("should have a 'readUrls' function", function(){
     var urlArray = ["example1.com", "example2.com"];
 
-    var filePath = path.join(__dirname, "/testdata/sites.txt");
+    var filePath = path.join(__dirname, "../data/sites.txt");
 
     fs.writeFileSync(filePath, urlArray.join("\n"));
 
@@ -27,7 +27,7 @@ describe("html fetcher helpers", function(){
     });
   });
 
-  xit("should have a 'downloadUrls' function", function(){
+  it("should have a 'downloadUrls' function", function(){
     var result = htmlFetcherHelpers.downloadUrls();
     expect(result).toBeTruthy();
   });
