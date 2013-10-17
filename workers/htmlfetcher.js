@@ -9,4 +9,4 @@ var fetchHTML = function(){
   helpers.readUrls(filePath, helpers.downloadUrls);
 };
 
-// setInterval(fetchHTML, 5000);
+setInterval(fetchHTML, 5000);

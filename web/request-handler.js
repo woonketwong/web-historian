@@ -2,6 +2,14 @@ var path = require('path');
 var url = require('url');
 var fs = require('fs');
 var querystring = require('querystring');
+var mysql      = require('mysql');
+var connection = mysql.createConnection({
+  host     : 'localhost',
+  port     : '3306',
+  user     : 'root',
+  password : '',
+  database : 'webHistorian'
+});
 
 module.exports.datadir = path.join(__dirname, "../data/sites.txt"); // tests will need to override this.
 
@@ -19,6 +27,8 @@ module.exports.handleRequest = function (req, res) {
   var responseBody = '';
   var fileLocation;
   var pathname = url.parse(req.url).pathname;
+
+  connection.connect();
 
   switch(req.method){
     case 'GET':
@@ -56,6 +66,7 @@ module.exports.handleRequest = function (req, res) {
       responseBody = 'Not Found';
   }
 
+  connection.end();
   res.writeHead(statusCode, headers);
   res.end(responseBody);
 };
