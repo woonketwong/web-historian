@@ -14,30 +14,31 @@ var connection = mysql.createConnection({
 module.exports.datadir = path.join(__dirname, "../data/sites.txt"); // tests will need to override this.
 
 module.exports.handleRequest = function (req, res) {
-  console.log(exports.datadir);
 
   var fileLocation;
   var pathname = url.parse(req.url).pathname;
 
   var setResponseBodyFromFile = function(fileLocation){
-    var responseBody;
+    var responseBody, statusCode;
     if(fs.existsSync(fileLocation)){
+      statusCode = 302;
       responseBody = fs.readFileSync(fileLocation, 'utf8');
     } else {
-      responseBody = 'Not found';
+      statusCode = 404;
+      responseBody = 'Could not find HTML file.';
     }
-    completeResponse(200, responseBody);
+    console.log('responseBody:',responseBody);
+    completeResponse(statusCode, responseBody);
   };
 
   var completeResponse = function(statusCode, responseBody){
-    connection.end();
 
     var headers = {
-    "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "access-control-allow-headers": "content-type, accept",
-    "access-control-max-age": 10,
-    "Content-Type": "text/html"
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "access-control-allow-headers": "content-type, accept",
+      "access-control-max-age": 10,
+      "Content-Type": "text/html"
     };
 
     res.writeHead(statusCode, headers);
@@ -46,20 +47,13 @@ module.exports.handleRequest = function (req, res) {
 
   switch(req.method){
     case 'GET':
-      connection.connect();
       if (pathname === '/') {
         fileLocation = path.join(__dirname, '../web/public/index.html');
         setResponseBodyFromFile(fileLocation);
-      } else if (pathname){
-        connection.query('select filepath from siteIndex where url = ' + pathname, function(err, rows){
-          fileLocation = rows[0].filepath;
-          setResponseBodyFromFile(fileLocation);
-        });
       }
       break;
 
     case 'POST':
-      connection.connect();
       var data = '';
       req.on('data', function(chunk) {
         data += chunk;
@@ -67,16 +61,19 @@ module.exports.handleRequest = function (req, res) {
       req.on('end', function() {
         var urlToAdd = querystring.parse(data)['url'];
 
-        connection.query('select * from siteIndex where url = ' + urlToAdd, function(err, rows){
+        connection.query('select * from siteIndex where url = ' + "'" + urlToAdd + "'", function(err, rows){
           // check whether SQL database already contains row for the URL
           if(rows.length){
-            fileLocation = path.join(__dirname, '../data/sites/');
-            connection.query('insert into siteIndex (url, filepath) values (' +
-              urlToAdd + ',' + fileLocation + urlToAdd + ')', function(err){
-                completeResponse(302, 'Added to database.');
-            });
+            console.log('rows',rows);
+            fileLocation = rows[0].filepath;
+            setResponseBodyFromFile(fileLocation);
           } else {
-            completeResponse(302, 'Already in database.');
+            fileLocation = path.join(__dirname, '../data/sites/');
+            var SQLStatement = 'insert into siteIndex (url, filepath) values (' +
+              "'" + urlToAdd + "'" + ',' + "'" + fileLocation + urlToAdd + "' " + ')';
+            connection.query(SQLStatement, function(err){
+                completeResponse(201, 'Added to database.');
+            });
           }
         });
       });
@@ -89,5 +86,5 @@ module.exports.handleRequest = function (req, res) {
     default:
       completeResponse(404, 'Not found');
   }
-
+  console.log('test');
 };

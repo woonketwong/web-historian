@@ -7,4 +7,4 @@ USE webHistorian;
 
 CREATE table siteIndex
   (url varchar(1000),
-  filepath varchar(100));
+  filepath varchar(1200));
